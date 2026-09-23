@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
+export const dynamic = "force-dynamic";
+
 // Proxy to Free Dictionary API to avoid CORS issues and cache results
 export async function GET(req: NextRequest) {
   try {
@@ -26,6 +28,9 @@ export async function GET(req: NextRequest) {
           partOfSpeech: "unknown",
           example: null,
           phonetic: null,
+          audioUrl: null,
+          synonyms: [],
+          allMeanings: [],
           found: false,
         },
         { status: 200 }
@@ -33,7 +38,24 @@ export async function GET(req: NextRequest) {
     }
 
     const data = await response.json();
-    const entry = data[0];
+    const entry = Array.isArray(data) ? data[0] : null;
+
+    if (!entry) {
+      return NextResponse.json(
+        {
+          word,
+          definition: "No definition found",
+          partOfSpeech: "unknown",
+          example: null,
+          phonetic: null,
+          audioUrl: null,
+          synonyms: [],
+          allMeanings: [],
+          found: false,
+        },
+        { status: 200 }
+      );
+    }
 
     // Extract the most useful information
     const meanings = entry.meanings || [];
@@ -41,7 +63,7 @@ export async function GET(req: NextRequest) {
     const firstDef = firstMeaning.definitions?.[0] || {};
 
     const result = {
-      word: entry.word,
+      word: entry.word || word,
       phonetic: entry.phonetic || entry.phonetics?.[0]?.text || null,
       audioUrl: entry.phonetics?.find((p: { audio?: string }) => p.audio)?.audio || null,
       partOfSpeech: firstMeaning.partOfSpeech || "unknown",
@@ -65,8 +87,18 @@ export async function GET(req: NextRequest) {
   } catch (error) {
     console.error("Definition fetch error:", error);
     return NextResponse.json(
-      { error: "Failed to fetch definition" },
-      { status: 500 }
+      {
+        word: "",
+        definition: "Could not load definition",
+        partOfSpeech: "unknown",
+        example: null,
+        phonetic: null,
+        audioUrl: null,
+        synonyms: [],
+        allMeanings: [],
+        found: false,
+      },
+      { status: 200 }
     );
   }
 }

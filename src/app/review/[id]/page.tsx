@@ -24,11 +24,11 @@ interface DefinitionData {
   partOfSpeech: string;
   definition: string;
   example: string | null;
-  synonyms: string[];
-  allMeanings: Array<{
-    partOfSpeech: string;
-    definition: string;
-    example: string | null;
+  synonyms?: string[];
+  allMeanings?: Array<{
+    partOfSpeech?: string;
+    definition?: string;
+    example?: string | null;
   }>;
   found: boolean;
 }
@@ -144,8 +144,12 @@ export default function ReviewPage() {
       const res = await fetch(
         `/api/definition?word=${encodeURIComponent(current.word)}`
       );
+      if (!res.ok) throw new Error("Fetch failed");
       const data: DefinitionData = await res.json();
-      setDefinition(data);
+      setDefinition({
+        ...data,
+        synonyms: data.synonyms || [],
+      });
     } catch {
       setDefinition({
         word: current.word,
@@ -398,7 +402,7 @@ export default function ReviewPage() {
                       )}
 
                       {/* Synonyms */}
-                      {definition.synonyms.length > 0 && (
+                      {definition.synonyms && definition.synonyms.length > 0 && (
                         <div className="mb-6">
                           <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                             Synonyms
