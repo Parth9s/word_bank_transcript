@@ -141,8 +141,9 @@ export default function ReviewPage() {
     setDefLoading(true);
 
     try {
+      const contextParam = current.context ? `&context=${encodeURIComponent(current.context)}` : "";
       const res = await fetch(
-        `/api/definition?word=${encodeURIComponent(current.word)}`
+        `/api/definition?word=${encodeURIComponent(current.word)}${contextParam}`
       );
       if (!res.ok) throw new Error("Fetch failed");
       const data: DefinitionData = await res.json();
