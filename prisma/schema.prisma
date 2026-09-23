@@ -1,0 +1,28 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Word {
+  id               String   @id @default(cuid())
+  text             String   @unique
+  definitionData   Json?
+  status           String   // "known" | "learned"
+  firstSeenContext String?
+  frequency        Int?
+  addedAt          DateTime @default(now())
+}
+
+model TranscriptUpload {
+  id              String   @id @default(cuid())
+  title           String
+  rawText         String
+  parsedData      Json?    // cached ParseResult
+  uploadedAt      DateTime @default(now())
+  wordCount       Int
+  uniqueWordCount Int
+}

@@ -1,101 +1,172 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+import Navbar from "@/components/layout/navbar";
+
+interface Transcript {
+  id: string;
+  title: string;
+  uploadedAt: string;
+  wordCount: number;
+  uniqueWordCount: number;
+}
+
+export default function HomePage() {
+  const [transcripts, setTranscripts] = useState<Transcript[]>([]);
+  const [wordCount, setWordCount] = useState(0);
+
+  useEffect(() => {
+    fetch("/api/transcripts")
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data)) setTranscripts(data);
+      })
+      .catch(() => {});
+
+    fetch("/api/words")
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data)) setWordCount(data.length);
+      })
+      .catch(() => {});
+  }, []);
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    <>
+      <Navbar />
+      <main className="mx-auto max-w-5xl px-6 py-16">
+        {/* Hero */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="mb-20 text-center"
+        >
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border/60 bg-card px-4 py-1.5 text-sm text-muted-foreground">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+            Keyboard-driven vocabulary learning
+          </div>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+          <h1 className="mb-4 text-5xl font-bold tracking-tight sm:text-6xl">
+            Build your{" "}
+            <span className="bg-gradient-to-r from-blue-400 via-blue-500 to-indigo-500 bg-clip-text text-transparent">
+              Word Bank
+            </span>
+          </h1>
+          <p className="mx-auto mb-10 max-w-xl text-lg text-muted-foreground leading-relaxed">
+            Upload transcripts, discover vocabulary patterns, and learn new
+            words — one card at a time.
+          </p>
+
+          <div className="flex items-center justify-center gap-4">
+            <Link
+              href="/upload"
+              className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition-all hover:shadow-xl hover:shadow-primary/30 hover:brightness-110"
+            >
+              <span>↑</span>
+              Upload Transcript
+            </Link>
+            <Link
+              href="/wordbank"
+              className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-6 py-3 text-sm font-medium text-foreground transition-all hover:bg-accent"
+            >
+              <span>◆</span>
+              View Word Bank
+              {wordCount > 0 && (
+                <span className="ml-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">
+                  {wordCount}
+                </span>
+              )}
+            </Link>
+          </div>
+        </motion.div>
+
+        {/* How it works */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="mb-20"
+        >
+          <h2 className="mb-8 text-center text-sm font-semibold uppercase tracking-widest text-muted-foreground">
+            How it works
+          </h2>
+          <div className="grid gap-4 sm:grid-cols-4">
+            {[
+              {
+                step: "01",
+                title: "Upload",
+                desc: "Drop a transcript file or paste text",
+              },
+              {
+                step: "02",
+                title: "Analyze",
+                desc: "See frequency, categories, and stats",
+              },
+              {
+                step: "03",
+                title: "Review",
+                desc: "Cards for each unknown word, keyboard-driven",
+              },
+              {
+                step: "04",
+                title: "Learn",
+                desc: "Get definitions, save to your Word Bank",
+              },
+            ].map((item, i) => (
+              <motion.div
+                key={item.step}
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.3 + i * 0.1 }}
+                className="rounded-xl border border-border/50 bg-card p-5"
+              >
+                <span className="mb-3 block text-xs font-bold text-primary/60">
+                  {item.step}
+                </span>
+                <h3 className="mb-1 text-sm font-semibold">{item.title}</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  {item.desc}
+                </p>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* Recent uploads */}
+        {transcripts.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
           >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
+            <h2 className="mb-6 text-sm font-semibold uppercase tracking-widest text-muted-foreground">
+              Recent Uploads
+            </h2>
+            <div className="space-y-2">
+              {transcripts.slice(0, 5).map((t) => (
+                <Link
+                  key={t.id}
+                  href={`/analysis/${t.id}`}
+                  className="flex items-center justify-between rounded-xl border border-border/50 bg-card px-5 py-4 transition-all hover:border-primary/30 hover:bg-accent"
+                >
+                  <div>
+                    <h3 className="text-sm font-medium">{t.title}</h3>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(t.uploadedAt).toLocaleDateString()} ·{" "}
+                      {t.wordCount.toLocaleString()} words ·{" "}
+                      {t.uniqueWordCount.toLocaleString()} unique
+                    </p>
+                  </div>
+                  <span className="text-muted-foreground">→</span>
+                </Link>
+              ))}
+            </div>
+          </motion.div>
+        )}
       </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+    </>
   );
 }
