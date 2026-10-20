@@ -195,7 +195,7 @@ export function parseTranscript(
 
   // Step 6: Extract context sentences for each unique word
   const wordContexts: Record<string, string[]> = {};
-  for (const word of freqMap.keys()) {
+  for (const word of Array.from(freqMap.keys())) {
     wordContexts[word] = extractSentences(cleanedText, word);
   }
 

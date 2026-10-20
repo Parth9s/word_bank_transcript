@@ -86,6 +86,11 @@ export default function UploadPage() {
         }),
       });
 
+      if (res.status === 401) {
+        router.push("/login?redirect=/upload");
+        return;
+      }
+
       if (!res.ok) throw new Error("Upload failed");
 
       const data = await res.json();

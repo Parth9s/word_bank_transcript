@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "@/components/layout/navbar";
 
 interface Word {
   id: string;
   text: string;
+  lemma?: string | null;
   definitionData: {
     word?: string;
     phonetic?: string;
@@ -26,6 +28,7 @@ type SortOption = "recent" | "alphabetical" | "frequency";
 type FilterOption = "all" | "known" | "learned";
 
 export default function WordBankPage() {
+  const router = useRouter();
   const [words, setWords] = useState<Word[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -39,6 +42,10 @@ export default function WordBankPage() {
       const res = await fetch(
         `/api/words?sort=${sort}&status=${filter === "all" ? "" : filter}`
       );
+      if (res.status === 401) {
+        router.replace("/login?redirect=/wordbank");
+        return;
+      }
       const data = await res.json();
       if (Array.isArray(data)) setWords(data);
     } catch {
@@ -218,6 +225,11 @@ export default function WordBankPage() {
                         >
                           {word.status}
                         </span>
+                        {word.lemma && word.lemma !== word.text.toLowerCase() && (
+                          <span className="hidden sm:inline-block rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
+                            root: {word.lemma}
+                          </span>
+                        )}
                       </div>
                       <div className="flex items-center gap-3">
                         {word.frequency && (

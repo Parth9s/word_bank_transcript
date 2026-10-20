@@ -1,13 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { getCurrentUser } from "@/lib/auth";
 
 export async function GET(
   _req: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const word = await prisma.word.findUnique({
-      where: { id: params.id },
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    const word = await prisma.word.findFirst({
+      where: { id: params.id, userId: user.id },
     });
     if (!word) {
       return NextResponse.json({ error: "Word not found" }, { status: 404 });
@@ -27,9 +36,17 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
     const body = await req.json();
-    const word = await prisma.word.update({
-      where: { id: params.id },
+    const word = await prisma.word.updateMany({
+      where: { id: params.id, userId: user.id },
       data: body,
     });
     return NextResponse.json(word);
@@ -47,8 +64,16 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    await prisma.word.delete({
-      where: { id: params.id },
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    await prisma.word.deleteMany({
+      where: { id: params.id, userId: user.id },
     });
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -25,12 +25,18 @@ interface ParsedData {
   cleanedText: string;
 }
 
+interface ReviewProgress {
+  currentIndex: number;
+  completed: boolean;
+}
+
 interface TranscriptData {
   id: string;
   title: string;
   wordCount: number;
   uniqueWordCount: number;
   parsedData: ParsedData;
+  reviewProgress?: ReviewProgress | null;
 }
 
 type CategoryTab = "common" | "moderate" | "rare";
@@ -47,6 +53,10 @@ export default function AnalysisPage() {
     const fetchData = async () => {
       try {
         const res = await fetch(`/api/transcripts/${params.id}`);
+        if (res.status === 401) {
+          router.replace(`/login?redirect=/analysis/${params.id}`);
+          return;
+        }
         if (!res.ok) throw new Error("Not found");
         const transcript: TranscriptData = await res.json();
         setData(transcript);
@@ -146,7 +156,11 @@ export default function AnalysisPage() {
               onClick={() => router.push(`/review/${params.id}`)}
               className="rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition-all hover:shadow-xl hover:brightness-110"
             >
-              Start Review →
+              {data.reviewProgress && data.reviewProgress.currentIndex > 0 && !data.reviewProgress.completed
+                ? `Resume Review (Card ${data.reviewProgress.currentIndex + 1}) →`
+                : data.reviewProgress?.completed
+                ? "Review Completed ✓"
+                : "Start Review →"}
             </button>
           </div>
 

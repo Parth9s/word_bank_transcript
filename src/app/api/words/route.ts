@@ -1,14 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { getCurrentUser } from "@/lib/auth";
+import { getLemma } from "@/lib/lemma";
 
 export async function GET(req: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json(
+        { error: "Unauthorized. Please log in." },
+        { status: 401 }
+      );
+    }
+
     const { searchParams } = new URL(req.url);
     const search = searchParams.get("search") || "";
     const status = searchParams.get("status") || "";
     const sort = searchParams.get("sort") || "addedAt";
 
-    const where: Record<string, unknown> = {};
+    const where: Record<string, unknown> = {
+      userId: user.id,
+    };
+
     if (search) {
       where.text = { contains: search, mode: "insensitive" };
     }
@@ -39,6 +52,14 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json(
+        { error: "Unauthorized. Please log in." },
+        { status: 401 }
+      );
+    }
+
     const body = await req.json();
     const { text, status, definitionData, firstSeenContext, frequency } =
       body as {
@@ -56,16 +77,28 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Upsert — if word already exists, update its status
+    const cleanText = text.toLowerCase().trim();
+    const lemma = getLemma(cleanText);
+
+    // Upsert — per-user unique constraint
     const word = await prisma.word.upsert({
-      where: { text: text.toLowerCase() },
+      where: {
+        userId_text: {
+          userId: user.id,
+          text: cleanText,
+        },
+      },
       update: {
         status,
-        ...(definitionData && { definitionData: definitionData as object }),
-        ...(firstSeenContext && { firstSeenContext }),
+        lemma,
+        ...(definitionData ? { definitionData: definitionData as object } : {}),
+        ...(firstSeenContext ? { firstSeenContext } : {}),
+        ...(typeof frequency === "number" ? { frequency } : {}),
       },
       create: {
-        text: text.toLowerCase(),
+        userId: user.id,
+        text: cleanText,
+        lemma,
         status,
         definitionData: (definitionData as object) || undefined,
         firstSeenContext,
